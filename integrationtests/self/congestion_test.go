@@ -9,6 +9,7 @@ import (
 
 	"github.com/quic-go/quic-go"
 	"github.com/quic-go/quic-go/congestion"
+	"github.com/quic-go/quic-go/congestion/bbr"
 
 	"github.com/stretchr/testify/require"
 )
@@ -105,4 +106,39 @@ func TestExternalCongestionController(t *testing.T) {
 	require.Equal(t, 1, controller.controllers)
 	require.Greater(t, controller.sent, (1<<20)/1500)
 	require.NotZero(t, controller.appLimited)
+}
+
+func TestBBRController(t *testing.T) {
+	ln, err := quic.Listen(newUDPConnLocalhost(t), getTLSConfig(), getQuicConfig(nil))
+	require.NoError(t, err)
+	defer ln.Close()
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	client, err := quic.Dial(ctx, newUDPConnLocalhost(t), ln.Addr(), getTLSClientConfig(), getQuicConfig(&quic.Config{Congestion: bbr.New}))
+	require.NoError(t, err)
+	defer client.CloseWithError(0, "")
+
+	server, err := ln.Accept(ctx)
+	require.NoError(t, err)
+
+	data := GeneratePRData(4 << 20)
+	str, err := client.OpenUniStreamSync(ctx)
+	require.NoError(t, err)
+	writeErr := make(chan error, 1)
+	go func() {
+		_, err := str.Write(data)
+		if err == nil {
+			err = str.Close()
+		}
+		writeErr <- err
+	}()
+
+	rstr, err := server.AcceptUniStream(ctx)
+	require.NoError(t, err)
+	received, err := io.ReadAll(rstr)
+	require.NoError(t, err)
+	require.Equal(t, data, received)
+	require.NoError(t, <-writeErr)
 }
