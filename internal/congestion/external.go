@@ -4,10 +4,12 @@ import (
 	"github.com/quic-go/quic-go/congestion"
 	"github.com/quic-go/quic-go/internal/monotime"
 	"github.com/quic-go/quic-go/internal/protocol"
+	"github.com/quic-go/quic-go/internal/utils"
 )
 
 type External struct {
 	controller congestion.Controller
+	connStats  *utils.ConnectionStats
 
 	event   congestion.Event
 	pending bool
@@ -15,8 +17,8 @@ type External struct {
 
 var _ SendAlgorithmWithDebugInfos = &External{}
 
-func NewExternal(controller congestion.Controller) *External {
-	return &External{controller: controller}
+func NewExternal(controller congestion.Controller, connStats *utils.ConnectionStats) *External {
+	return &External{controller: controller, connStats: connStats}
 }
 
 func (e *External) OnPacketSent(sentTime monotime.Time, bytesInFlight protocol.ByteCount, pn protocol.PacketNumber, bytes protocol.ByteCount, isRetransmittable bool) {
@@ -29,6 +31,8 @@ func (e *External) OnPacketAcked(pn protocol.PacketNumber, ackedBytes, priorInFl
 }
 
 func (e *External) OnCongestionEvent(pn protocol.PacketNumber, lostBytes, priorInFlight protocol.ByteCount) {
+	e.connStats.PacketsLost.Add(1)
+	e.connStats.BytesLost.Add(uint64(lostBytes))
 	e.begin(priorInFlight)
 	e.event.Lost = append(e.event.Lost, congestion.LostPacket{PacketNumber: pn, Bytes: lostBytes})
 }

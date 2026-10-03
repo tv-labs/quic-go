@@ -1141,7 +1141,7 @@ func (h *sentPacketHandler) newCongestion(initialMaxDatagramSize protocol.ByteCo
 		return congestion.NewExternal(h.newController(cc.Params{
 			RTTStats:               h.rttStats,
 			InitialMaxDatagramSize: initialMaxDatagramSize,
-		}))
+		}), h.connStats)
 	}
 	return congestion.NewCubicSender(
 		congestion.DefaultClock{},

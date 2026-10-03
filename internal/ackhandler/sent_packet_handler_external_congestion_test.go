@@ -157,3 +157,19 @@ func TestSentPacketHandlerExternalCongestionPathMigration(t *testing.T) {
 	require.Len(t, *controllers, 2)
 	require.EqualValues(t, 1300, (*controllers)[1].params.InitialMaxDatagramSize)
 }
+
+func TestSentPacketHandlerExternalCongestionCountsLosses(t *testing.T) {
+	sph, _, send := newExternallyControlledHandler(t, protocol.EncryptionInitial)
+	now := monotime.Now()
+	var pns []protocol.PacketNumber
+	for range 5 {
+		pns = append(pns, send(now))
+	}
+
+	_, err := sph.ReceivedAck(&wire.AckFrame{AckRanges: ackRanges(pns[3], pns[4])}, protocol.EncryptionInitial, now.Add(time.Second))
+	require.NoError(t, err)
+
+	stats := sph.(*sentPacketHandler).connStats
+	require.EqualValues(t, 2, stats.PacketsLost.Load())
+	require.EqualValues(t, 2000, stats.BytesLost.Load())
+}
