@@ -1985,6 +1985,7 @@ func TestConnectionIdleTimeout(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		mockCtrl := gomock.NewController(t)
 		sph := mockackhandler.NewMockSentPacketHandler(mockCtrl)
+		sph.EXPECT().OnAppLimited().AnyTimes()
 		tc := newServerTestConnection(t,
 			mockCtrl,
 			&Config{MaxIdleTimeout: time.Minute},
@@ -2133,6 +2134,7 @@ func TestConnectionACKTimer(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		mockCtrl := gomock.NewController(t)
 		sph := mockackhandler.NewMockSentPacketHandler(mockCtrl)
+		sph.EXPECT().OnAppLimited().AnyTimes()
 		tc := newServerTestConnection(t,
 			mockCtrl,
 			&Config{MaxIdleTimeout: time.Second},
@@ -2219,6 +2221,7 @@ func TestConnectionGSOBatch(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		mockCtrl := gomock.NewController(t)
 		sph := mockackhandler.NewMockSentPacketHandler(mockCtrl)
+		sph.EXPECT().OnAppLimited().AnyTimes()
 		tc := newServerTestConnection(t,
 			mockCtrl,
 			nil,
@@ -2285,6 +2288,7 @@ func TestConnectionGSOBatchPacketSize(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		mockCtrl := gomock.NewController(t)
 		sph := mockackhandler.NewMockSentPacketHandler(mockCtrl)
+		sph.EXPECT().OnAppLimited().AnyTimes()
 		tc := newServerTestConnection(t,
 			mockCtrl,
 			nil,
@@ -2372,6 +2376,7 @@ func TestConnectionGSOBatchECN(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		mockCtrl := gomock.NewController(t)
 		sph := mockackhandler.NewMockSentPacketHandler(mockCtrl)
+		sph.EXPECT().OnAppLimited().AnyTimes()
 		tc := newServerTestConnection(t,
 			mockCtrl,
 			nil,
@@ -2632,6 +2637,7 @@ func testConnectionSendQueue(t *testing.T, enableGSO bool) {
 	synctest.Test(t, func(t *testing.T) {
 		mockCtrl := gomock.NewController(t)
 		sph := mockackhandler.NewMockSentPacketHandler(mockCtrl)
+		sph.EXPECT().OnAppLimited().AnyTimes()
 		sender := NewMockSender(mockCtrl)
 		tc := newServerTestConnection(t,
 			mockCtrl,

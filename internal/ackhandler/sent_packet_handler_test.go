@@ -118,6 +118,7 @@ func testSentPacketHandlerSendAndAcknowledge(t *testing.T, encLevel protocol.Enc
 		nil,
 		protocol.PerspectiveClient,
 		nil,
+		nil,
 		utils.DefaultLogger,
 	)
 
@@ -173,6 +174,7 @@ func TestSentPacketHandlerAcknowledgeSkippedPacket(t *testing.T) {
 		nil,
 		protocol.PerspectiveClient,
 		nil,
+		nil,
 		utils.DefaultLogger,
 	)
 
@@ -215,6 +217,7 @@ func TestSentPacketHandlerRTTAckEliciting(t *testing.T) {
 		false,
 		nil,
 		protocol.PerspectiveClient,
+		nil,
 		&eventRecorder,
 		utils.DefaultLogger,
 	)
@@ -304,6 +307,7 @@ func TestSentPacketHandlerRTTAcrossPacketNumberSpaces(t *testing.T) {
 		nil,
 		protocol.PerspectiveClient,
 		nil,
+		nil,
 		utils.DefaultLogger,
 	)
 
@@ -364,6 +368,7 @@ func testSentPacketHandlerRTTAckDelays(t *testing.T, encLevel protocol.Encryptio
 		false,
 		nil,
 		protocol.PerspectiveClient,
+		nil,
 		nil,
 		utils.DefaultLogger,
 	)
@@ -456,6 +461,7 @@ func testSentPacketHandlerAmplificationLimitServer(t *testing.T, addressValidate
 		nil,
 		protocol.PerspectiveServer,
 		nil,
+		nil,
 		utils.DefaultLogger,
 	)
 
@@ -527,6 +533,7 @@ func testSentPacketHandlerAmplificationLimitClient(t *testing.T, dropHandshake b
 		nil,
 		protocol.PerspectiveClient,
 		nil,
+		nil,
 		utils.DefaultLogger,
 	)
 
@@ -583,6 +590,7 @@ func TestSentPacketHandlerDelayBasedLossDetection(t *testing.T) {
 		nil,
 		protocol.PerspectiveServer,
 		nil,
+		nil,
 		utils.DefaultLogger,
 	)
 
@@ -637,6 +645,7 @@ func TestSentPacketHandlerPacketBasedLossDetection(t *testing.T) {
 		false,
 		nil,
 		protocol.PerspectiveServer,
+		nil,
 		nil,
 		utils.DefaultLogger,
 	)
@@ -699,6 +708,7 @@ func testSentPacketHandlerPTO(t *testing.T, encLevel protocol.EncryptionLevel, p
 		false,
 		nil,
 		protocol.PerspectiveServer,
+		nil,
 		&eventRecorder,
 		utils.DefaultLogger,
 	)
@@ -918,6 +928,7 @@ func TestSentPacketHandlerPacketNumberSpacesPTO(t *testing.T) {
 		nil,
 		protocol.PerspectiveServer,
 		nil,
+		nil,
 		utils.DefaultLogger,
 	)
 
@@ -1011,6 +1022,7 @@ func TestSentPacketHandler0RTT(t *testing.T) {
 		nil,
 		protocol.PerspectiveClient,
 		nil,
+		nil,
 		utils.DefaultLogger,
 	)
 
@@ -1062,6 +1074,7 @@ func TestSentPacketHandlerCongestion(t *testing.T) {
 		false,
 		nil,
 		protocol.PerspectiveServer,
+		nil,
 		nil,
 		utils.DefaultLogger,
 	)
@@ -1164,6 +1177,7 @@ func testSentPacketHandlerRetry(t *testing.T, rtt, expectedRTT time.Duration) {
 		nil,
 		protocol.PerspectiveClient,
 		nil,
+		nil,
 		utils.DefaultLogger,
 	)
 
@@ -1216,6 +1230,7 @@ func TestSentPacketHandlerRetryAfterPTO(t *testing.T) {
 		nil,
 		protocol.PerspectiveClient,
 		nil,
+		nil,
 		utils.DefaultLogger,
 	)
 
@@ -1260,6 +1275,7 @@ func TestSentPacketHandlerECN(t *testing.T) {
 		false,
 		nil,
 		protocol.PerspectiveClient,
+		nil,
 		nil,
 		utils.DefaultLogger,
 	)
@@ -1366,6 +1382,7 @@ func TestSentPacketHandlerPathProbe(t *testing.T) {
 		nil,
 		protocol.PerspectiveClient,
 		nil,
+		nil,
 		utils.DefaultLogger,
 	)
 	sph.DropPackets(protocol.EncryptionInitial, monotime.Now())
@@ -1447,6 +1464,7 @@ func TestSentPacketHandlerPathProbeAckAndLoss(t *testing.T) {
 		nil,
 		protocol.PerspectiveClient,
 		nil,
+		nil,
 		utils.DefaultLogger,
 	)
 	sph.DropPackets(protocol.EncryptionInitial, monotime.Now())
@@ -1524,6 +1542,7 @@ func testSentPacketHandlerRandomized(t *testing.T, seed uint64) {
 		nil,
 		protocol.PerspectiveClient,
 		nil,
+		nil,
 		utils.DefaultLogger,
 	)
 	sph.DropPackets(protocol.EncryptionInitial, monotime.Now())
@@ -1593,6 +1612,7 @@ func TestSentPacketHandlerSpuriousLoss(t *testing.T) {
 		false,
 		nil,
 		protocol.PerspectiveClient,
+		nil,
 		&eventRecorder,
 		utils.DefaultLogger,
 	)
@@ -1729,6 +1749,7 @@ func benchmarkSendAndAcknowledge(b *testing.B, ackEvery, inFlight int) {
 		false,
 		nil,
 		protocol.PerspectiveClient,
+		nil,
 		nil,
 		utils.DefaultLogger,
 	)

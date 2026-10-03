@@ -318,6 +318,7 @@ var newConnection = func(
 		s.conn.capabilities().ECN,
 		s.receivedPacketHandler.IgnorePacketsBelow,
 		s.perspective,
+		s.config.Congestion,
 		s.qlogger,
 		s.logger,
 	)
@@ -447,6 +448,7 @@ var newClientConnection = func(
 		s.conn.capabilities().ECN,
 		s.receivedPacketHandler.IgnorePacketsBelow,
 		s.perspective,
+		s.config.Congestion,
 		s.qlogger,
 		s.logger,
 	)
@@ -2566,6 +2568,7 @@ func (c *Conn) sendPacketsWithoutGSO(now monotime.Time) error {
 		if _, err := c.appendOneShortHeaderPacket(buf, c.maxPacketSize(), ecn, now); err != nil {
 			if err == errNothingToPack {
 				buf.Release()
+				c.sentPacketHandler.OnAppLimited()
 				return nil
 			}
 			return err
@@ -2607,6 +2610,7 @@ func (c *Conn) sendPacketsWithGSO(now monotime.Time) error {
 			if err != errNothingToPack {
 				return err
 			}
+			c.sentPacketHandler.OnAppLimited()
 			if buf.Len() == 0 {
 				buf.Release()
 				return nil

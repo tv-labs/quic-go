@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	cc "github.com/quic-go/quic-go/congestion"
 	"github.com/quic-go/quic-go/internal/congestion"
 	"github.com/quic-go/quic-go/internal/monotime"
 	"github.com/quic-go/quic-go/internal/protocol"
@@ -89,9 +90,10 @@ type sentPacketHandler struct {
 
 	bytesInFlight protocol.ByteCount
 
-	congestion congestion.SendAlgorithmWithDebugInfos
-	rttStats   *utils.RTTStats
-	connStats  *utils.ConnectionStats
+	congestion    congestion.SendAlgorithmWithDebugInfos
+	newController cc.NewController
+	rttStats      *utils.RTTStats
+	connStats     *utils.ConnectionStats
 
 	// The number of times a PTO has been sent without receiving an ack.
 	ptoCount uint32
@@ -126,18 +128,10 @@ func NewSentPacketHandler(
 	enableECN bool,
 	ignorePacketsBelow func(protocol.PacketNumber),
 	pers protocol.Perspective,
+	newController cc.NewController,
 	qlogger qlogwriter.Recorder,
 	logger utils.Logger,
 ) SentPacketHandler {
-	congestion := congestion.NewCubicSender(
-		congestion.DefaultClock{},
-		rttStats,
-		connStats,
-		initialMaxDatagramSize,
-		true, // use Reno
-		qlogger,
-	)
-
 	h := &sentPacketHandler{
 		peerCompletedAddressValidation: pers == protocol.PerspectiveServer,
 		peerAddressValidated:           pers == protocol.PerspectiveClient || clientAddressValidated,
@@ -147,12 +141,13 @@ func NewSentPacketHandler(
 		lostPackets:                    *newLostPacketTracker(64),
 		rttStats:                       rttStats,
 		connStats:                      connStats,
-		congestion:                     congestion,
+		newController:                  newController,
 		ignorePacketsBelow:             ignorePacketsBelow,
 		perspective:                    pers,
 		qlogger:                        qlogger,
 		logger:                         logger,
 	}
+	h.congestion = h.newCongestion(initialMaxDatagramSize)
 	if enableECN {
 		h.enableECN = true
 		h.ecnTracker = newECNTracker(logger, qlogger)
@@ -425,7 +420,11 @@ func (h *sentPacketHandler) ReceivedAck(ack *wire.AckFrame, encLevel protocol.En
 	if encLevel == protocol.Encryption1RTT && h.ecnTracker != nil && largestAcked > pnSpace.largestAcked {
 		congested := h.ecnTracker.HandleNewlyAcked(ackedPackets, int64(ack.ECT0), int64(ack.ECT1), int64(ack.ECNCE))
 		if congested {
-			h.congestion.OnCongestionEvent(largestAcked, 0, priorInFlight)
+			if e, ok := h.congestion.(*congestion.External); ok {
+				e.OnECNCongestion(priorInFlight)
+			} else {
+				h.congestion.OnCongestionEvent(largestAcked, 0, priorInFlight)
+			}
 		}
 	}
 
@@ -448,6 +447,7 @@ func (h *sentPacketHandler) ReceivedAck(ack *wire.AckFrame, encLevel protocol.En
 			putPacket(p.packet)
 		}
 	}
+	h.finishCongestionEvent(rcvTime)
 
 	// detect spurious losses for application data packets, if the ACK was not reordered
 	if encLevel == protocol.Encryption1RTT && largestAcked == pnSpace.largestAcked {
@@ -885,6 +885,7 @@ func (h *sentPacketHandler) OnLossDetectionTimeout(now monotime.Time) error {
 		}
 		// Early retransmit or time loss detection
 		h.detectLostPackets(now, encLevel)
+		h.finishCongestionEvent(now)
 		return nil
 	}
 
@@ -1131,7 +1132,18 @@ func (h *sentPacketHandler) MigratedPath(now monotime.Time, initialMaxDatagramSi
 	for pn := range h.appDataPackets.history.PathProbes() {
 		h.appDataPackets.history.RemovePathProbe(pn)
 	}
-	h.congestion = congestion.NewCubicSender(
+	h.congestion = h.newCongestion(initialMaxDatagramSize)
+	h.setLossDetectionTimer(now)
+}
+
+func (h *sentPacketHandler) newCongestion(initialMaxDatagramSize protocol.ByteCount) congestion.SendAlgorithmWithDebugInfos {
+	if h.newController != nil {
+		return congestion.NewExternal(h.newController(cc.Params{
+			RTTStats:               h.rttStats,
+			InitialMaxDatagramSize: initialMaxDatagramSize,
+		}))
+	}
+	return congestion.NewCubicSender(
 		congestion.DefaultClock{},
 		h.rttStats,
 		h.connStats,
@@ -1139,5 +1151,16 @@ func (h *sentPacketHandler) MigratedPath(now monotime.Time, initialMaxDatagramSi
 		true, // use Reno
 		h.qlogger,
 	)
-	h.setLossDetectionTimer(now)
+}
+
+func (h *sentPacketHandler) finishCongestionEvent(now monotime.Time) {
+	if e, ok := h.congestion.(*congestion.External); ok {
+		e.FinishEvent(now)
+	}
+}
+
+func (h *sentPacketHandler) OnAppLimited() {
+	if e, ok := h.congestion.(*congestion.External); ok {
+		e.OnAppLimited(h.bytesInFlight)
+	}
 }

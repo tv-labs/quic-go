@@ -191,6 +191,42 @@ func (c *MockSentPacketHandlerMigratedPathCall) DoAndReturn(f func(monotime.Time
 	return c
 }
 
+// OnAppLimited mocks base method.
+func (m *MockSentPacketHandler) OnAppLimited() {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "OnAppLimited")
+}
+
+// OnAppLimited indicates an expected call of OnAppLimited.
+func (mr *MockSentPacketHandlerMockRecorder) OnAppLimited() *MockSentPacketHandlerOnAppLimitedCall {
+	mr.mock.ctrl.T.Helper()
+	call := mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "OnAppLimited", reflect.TypeOf((*MockSentPacketHandler)(nil).OnAppLimited))
+	return &MockSentPacketHandlerOnAppLimitedCall{Call: call}
+}
+
+// MockSentPacketHandlerOnAppLimitedCall wrap *gomock.Call
+type MockSentPacketHandlerOnAppLimitedCall struct {
+	*gomock.Call
+}
+
+// Return rewrite *gomock.Call.Return
+func (c *MockSentPacketHandlerOnAppLimitedCall) Return() *MockSentPacketHandlerOnAppLimitedCall {
+	c.Call = c.Call.Return()
+	return c
+}
+
+// Do rewrite *gomock.Call.Do
+func (c *MockSentPacketHandlerOnAppLimitedCall) Do(f func()) *MockSentPacketHandlerOnAppLimitedCall {
+	c.Call = c.Call.Do(f)
+	return c
+}
+
+// DoAndReturn rewrite *gomock.Call.DoAndReturn
+func (c *MockSentPacketHandlerOnAppLimitedCall) DoAndReturn(f func()) *MockSentPacketHandlerOnAppLimitedCall {
+	c.Call = c.Call.DoAndReturn(f)
+	return c
+}
+
 // OnLossDetectionTimeout mocks base method.
 func (m *MockSentPacketHandler) OnLossDetectionTimeout(now monotime.Time) error {
 	m.ctrl.T.Helper()
